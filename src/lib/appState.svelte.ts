@@ -24,7 +24,9 @@ const defaultAppSettings = {
 	pairsPerRow: 1,
 	thumbnailSize: 200,
 	spacing: 10,
-	dirsOk: false
+	dirsOk: false,
+	imageHeight: 200,
+	imageFullscreenView: true
 };
 
 export const AppSettings = new PersistedStateObjectAdvanced('app-settings', defaultAppSettings, {
