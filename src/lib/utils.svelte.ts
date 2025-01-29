@@ -114,3 +114,31 @@ export async function handleFileOperation(isMove: boolean) {
 		console.error('File operation failed:', error);
 	}
 }
+
+// INTERACTIONS
+
+export function toggleSelection(baseName: string, version: string) {
+	// console.log('Toggling selection:', baseName, version);
+
+	AppState.selections.set(baseName, AppState.selections.get(baseName) === version ? 'v1' : version);
+
+	// console.log('Selections:', AppState.selections.get(baseName));
+
+	updateSelectionCount();
+}
+
+export const pg = $state({
+	page: 0,
+	limit: 20,
+	size: AppState.imagePairs.length,
+	amounts: [20, 50, 100],
+	total: Math.ceil(AppState.imagePairs.length / AppSettings.v.itemsPerPage),
+	noRight: false,
+	noLeft: false
+});
+
+export function getPaginatedPairs() {
+	// const start = (AppState.currentPage - 1) * AppSettings.v.itemsPerPage;
+	// const end = start + AppSettings.v.itemsPerPage;
+	return AppState.imagePairs.slice(pg.page * pg.limit, pg.page * pg.limit + pg.limit);
+}

@@ -46,7 +46,8 @@ export const AppState = $state({
 	selections: new SvelteMap(),
 	currentPage: 1,
 	status: { v1: 0, v2: 0 },
-	heicCount: 0
+	heicCount: 0,
+	currentPair: null as foundPair | null
 });
 
 export function saveFileSysHandle(key: string, handle: FileSystemDirectoryHandle | null) {

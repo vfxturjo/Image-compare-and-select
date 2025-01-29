@@ -1,22 +1,12 @@
 <script lang="ts">
 	import { AppSettings, AppState, getFileSysHandles } from '$lib/appState.svelte';
 	import { leftArrow } from '$lib/components/Paginator/icons';
-	import { doSelectionByDefault, scanImages, updateSelectionCount } from '$lib/utils.svelte';
+	import { doSelectionByDefault, scanImages, toggleSelection, pg } from '$lib/utils.svelte';
 	import { onMount } from 'svelte';
 
 	import { popup } from '@skeletonlabs/skeleton';
 	import type { PopupSettings } from '@skeletonlabs/skeleton';
 	import { autoPlacement } from '@floating-ui/dom';
-
-	let pg = $state({
-		page: 0,
-		limit: 20,
-		size: AppState.imagePairs.length,
-		amounts: [20, 50, 100],
-		total: Math.ceil(AppState.imagePairs.length / AppSettings.v.itemsPerPage),
-		noRight: false,
-		noLeft: false
-	});
 
 	$effect(() => {
 		pg.noRight = pg.page === pg.total;
@@ -34,19 +24,6 @@
 
 		scanImages();
 	});
-
-	function toggleSelection(baseName: string, version: string) {
-		// console.log('Toggling selection:', baseName, version);
-
-		AppState.selections.set(
-			baseName,
-			AppState.selections.get(baseName) === version ? 'v1' : version
-		);
-
-		// console.log('Selections:', AppState.selections.get(baseName));
-
-		updateSelectionCount();
-	}
 
 	function getPaginatedPairs() {
 		// const start = (AppState.currentPage - 1) * AppSettings.v.itemsPerPage;

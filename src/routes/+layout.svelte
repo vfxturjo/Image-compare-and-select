@@ -90,9 +90,7 @@
 	</svelte:fragment>
 </AppBar>
 
-<div class="container mx-auto">
-	{@render children()}
-</div>
+{@render children()}
 
 {#if showBottomBar}
 	<!-- sticky bottom bar like a status bar -->
@@ -157,7 +155,11 @@
 
 	<p>Image Height</p>
 	<input type="range" max="1000" bind:value={AppSettings.v.imageHeight} />
+	<p>Image Fullscreen View</p>
 	<input type="checkbox" bind:checked={AppSettings.v.imageFullscreenView} />
+
+	<p>Thumbnail height</p>
+	<input type="range" max="1000" bind:value={AppSettings.v.thumbnailSize} />
 </div>
 
 <style>
