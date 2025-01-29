@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { AppSettings, AppState, getFileSysHandles } from '$lib/appState.svelte';
 	import { leftArrow } from '$lib/components/Paginator/icons';
-	import { doSelectionByDefault, scanImages, toggleSelection, pg } from '$lib/utils.svelte';
+	import { doSelectionByDefault, scanImages, setSelectionState, pg } from '$lib/utils.svelte';
 	import { onMount } from 'svelte';
 
 	import { popup } from '@skeletonlabs/skeleton';
@@ -50,7 +50,7 @@
 						? 'outline outline-2 outline-offset-2 outline-cyan-500'
 						: ''} {version === 'v1' ? 'float-right' : 'float-left'}"
 					style="height: {AppSettings.v.imageHeight}px;"
-					onclick={() => toggleSelection(pair.baseName, version)}
+					onclick={() => setSelectionState(pair.baseName, version)}
 				>
 					{#if pair[version]}
 						<img

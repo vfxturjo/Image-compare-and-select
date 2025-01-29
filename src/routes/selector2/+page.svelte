@@ -1,17 +1,28 @@
 <script lang="ts">
-	import { AppSettings, AppState, getFileSysHandles } from '$lib/appState.svelte';
+	import {
+		AppSettings,
+		AppState,
+		getFileSysHandles,
+		handleKeyboardEvent,
+		mouseMoveHandler
+	} from '$lib/appState.svelte';
 	import {
 		doSelectionByDefault,
 		scanImages,
-		toggleSelection,
+		setSelectionState,
 		getPaginatedPairs,
-		pg
+		pg,
+		debounce,
+		throttle
 	} from '$lib/utils.svelte';
 	import { onMount } from 'svelte';
 
 	let thumbnailScroll: HTMLDivElement;
 
 	onMount(async () => {
+		AppState.layout.bodyArea =
+			AppState.layout.svelteInnerHeight - (AppState.layout.topBar + AppState.layout.bottomBar);
+
 		let handles = await getFileSysHandles();
 		if (handles) {
 			AppState.v1DirFileSysHandle = handles.v1;
@@ -25,11 +36,35 @@
 		// set page size, scroll, selected element
 		pg.noRight = pg.page === pg.total;
 		pg.noLeft = pg.page === 0;
-		AppState.currentPair = getPaginatedPairs()[0];
+		AppState.currentPair = getPaginatedPairs(true)[0];
+	});
+
+	$effect(() => {
+		let targetElement = document.querySelector(
+			'button[data-ScrollID="' + AppState.currentPair?.baseName + '"]'
+		);
+		if (!targetElement) return;
+		thumbnailScroll.scrollLeft +=
+			targetElement!.getBoundingClientRect().left - window?.innerWidth / 2.5;
 	});
 </script>
 
-<div class="flex h-full w-full flex-col gap-2.5 overflow-hidden p-1">
+<svelte:window
+	bind:innerHeight={AppState.layout.svelteInnerHeight}
+	onkeypress={(e: KeyboardEvent) => {
+		handleKeyboardEvent(e.code);
+	}}
+	onmousemove={AppSettings.v.showNameInInfoBar
+		? (e) => {
+				throttle(mouseMoveHandler, 100)(e);
+			}
+		: null}
+/>
+
+<div
+	class="flex w-full flex-col gap-1 overflow-hidden p-1"
+	style="height: {AppState.layout.bodyArea}px;"
+>
 	<!-- Top buttons -->
 	<div class="[&>*]:my-0 [&>*]:py-0">
 		<button class="btn btn-sm">TOP TOOLBAR</button>
@@ -41,25 +76,35 @@
 	</div>
 
 	<!-- Thumbnails -->
-	<!-- scroll horizontally -->
 	<div
 		bind:this={thumbnailScroll}
-		class="flex gap-1 overflow-x-auto bg-red-500"
+		class="flex shrink-0 gap-1 overflow-x-auto"
 		id="thumbnail-scroll"
 		onwheel={(e) => {
 			e.preventDefault();
-			console.log(e);
 			thumbnailScroll.scrollLeft += e.deltaY;
 		}}
 	>
-		{#each getPaginatedPairs() as pair}
-			<div class="min-w-fit border border-gray-600">
+		{#each getPaginatedPairs(true) as pair}
+			<button
+				data-infoBar={pair.baseName}
+				class="min-w-fit border {pair == AppState.currentPair
+					? 'brightness-125'
+					: 'border-gray-600 brightness-75'}"
+				onclick={() => {
+					AppState.currentPair = pair;
+				}}
+			>
 				{#each ['v1', 'v2'] as version}
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					{#if pair[version]}
 						<img
-							class="inline"
+							class="inline border-b-4 {AppState.selections.get(pair.baseName) === version
+								? // ? ''
+									'border-warning-200'
+								: // : 'brightness-50'}"
+									'border-warning-900'}"
 							src={pair[version].url}
 							alt={pair[version].name}
 							style="height: {AppSettings.v.thumbnailSize}px; width: auto;"
@@ -68,7 +113,7 @@
 	<div>Missing {version.toUpperCase()}</div> -->
 					{/if}
 				{/each}
-			</div>
+			</button>
 			<span class="divider-vertical h-full"></span>
 		{:else}
 			<p>Select V1 and V2 folders.</p>
@@ -76,24 +121,32 @@
 	</div>
 
 	<!-- Main view -->
-	<div class="flex h-screen gap-1 bg-[#a05e5e]">
+	<div
+		class="flex w-full grow gap-1 overflow-hidden"
+		bind:clientHeight={AppState.layout.largeViewImgHeight}
+	>
 		{#each ['v1', 'v2'] as version}
-			<!-- svelte-ignore a11y_click_events_have_key_events -->
-			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			{#if AppState.currentPair}
-				<img
-					class="{version === 'v1' ? 'float-right' : 'float-left'} object-cover"
-					src={AppState.currentPair![version].url}
-					alt={AppState.currentPair![version].name}
-				/>
-				<!-- {:else}
-	<div>Missing {version.toUpperCase()}</div> -->
+				<button
+					class="w-full"
+					onclick={() => setSelectionState(AppState.currentPair!.baseName, version)}
+				>
+					<img
+						data-infoBar="{version} - {AppState.currentPair!.baseName}"
+						class="h-full w-full grow border-4 object-contain {version === 'v1'
+							? 'object-right'
+							: 'object-left'} {AppState.selections.get(AppState.currentPair!.baseName) === version
+							? 'border-yellow-300'
+							: 'border-gray-400'}"
+						src={AppState.currentPair![version].url}
+						alt={AppState.currentPair![version].name}
+					/>
+				</button>
+			{/if}
+			{#if version == 'v1'}
+				<span class="divider-vertical h-full"></span>
 			{/if}
 		{/each}
-		<!-- <div class="w-px self-stretch bg-[#b7bdd0] p-2.5"></div>
-
-		<div class="shrink grow basis-0 self-stretch bg-[#d9d9d9]"></div>
-		<div class="shrink grow basis-0 self-stretch bg-[#d9d9d9]"></div> -->
 	</div>
 </div>
 

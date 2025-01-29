@@ -1,6 +1,7 @@
 import { SvelteMap } from 'svelte/reactivity';
 import { PersistedStateObjectAdvanced } from './persistedStoreAdvanced.svelte';
 import { set, clear, get } from 'idb-keyval';
+import { setSelectionState } from './utils.svelte';
 
 export interface foundFile {
 	handle: FileSystemFileHandle;
@@ -21,12 +22,11 @@ const defaultAppSettings = {
 	v2DirName: 'Dir2',
 	defaultSelection: 'v1',
 	itemsPerPage: 20,
-	pairsPerRow: 1,
 	thumbnailSize: 200,
 	spacing: 10,
 	dirsOk: false,
-	imageHeight: 200,
-	imageFullscreenView: true
+	imageFullscreenView: true,
+	showNameInInfoBar: false
 };
 
 export const AppSettings = new PersistedStateObjectAdvanced('app-settings', defaultAppSettings, {
@@ -47,7 +47,16 @@ export const AppState = $state({
 	currentPage: 1,
 	status: { v1: 0, v2: 0 },
 	heicCount: 0,
-	currentPair: null as foundPair | null
+	currentPair: null as foundPair | null,
+	layout: {
+		topBar: 56,
+		bottomBar: 24,
+		bodyArea: 0,
+		svelteInnerHeight: 0,
+		largeViewImgHeight: 0
+	},
+	currentPairID: 0,
+	bottomBarText: ''
 });
 
 export function saveFileSysHandle(key: string, handle: FileSystemDirectoryHandle | null) {
@@ -71,4 +80,64 @@ export function resetAllSettings() {
 	localStorage.clear();
 	clear();
 	location.reload();
+}
+
+export function handleKeyboardEvent(key: string) {
+	console.log(key);
+	switch (key) {
+		case 'Space':
+		case 'Numpad6':
+			// Show next pair
+			getPairRelative(1);
+			break;
+		case 'Numpad4':
+			// Show previous pair
+			getPairRelative(-1);
+			break;
+		case 'Numpad1':
+		case 'KeyA':
+			// Select v1 and show next pair
+			if (AppState.currentPair?.baseName) {
+				setSelectionState(AppState.currentPair?.baseName, 'v1');
+				getPairRelative(1);
+			}
+			break;
+		case 'Numpad3':
+		case 'KeyD':
+			// Select v2 and show next pair
+			if (AppState.currentPair?.baseName) {
+				setSelectionState(AppState.currentPair?.baseName, 'v2');
+				getPairRelative(1);
+			}
+			break;
+		case 'NumpadSubtract':
+			setSelectionState(AppState.currentPair?.baseName, 'none');
+			break;
+		default:
+			break;
+	}
+}
+
+function getPairRelative(relPos: number) {
+	if (!AppState.imagePairs) {
+		return;
+	}
+
+	const currentIndex = AppState.imagePairs.indexOf(AppState.currentPair!);
+	if (currentIndex < AppState.imagePairs.length - relPos) {
+		AppState.currentPair = AppState.imagePairs[currentIndex + relPos];
+	} else {
+		console.log('No more pairs to show');
+	}
+}
+
+export function mouseMoveHandler(e: MouseEvent) {
+	console.log(e);
+	AppState.bottomBarText =
+		(e.target as HTMLDivElement).getAttribute('data-infobar') ??
+		((e.target as HTMLDivElement).parentNode as HTMLElement)?.getAttribute('data-infobar') ??
+		((e.target as HTMLDivElement).parentNode as HTMLElement)?.parentElement?.getAttribute(
+			'data-infobar'
+		) ??
+		'';
 }

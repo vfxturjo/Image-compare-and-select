@@ -117,10 +117,17 @@ export async function handleFileOperation(isMove: boolean) {
 
 // INTERACTIONS
 
-export function toggleSelection(baseName: string, version: string) {
-	// console.log('Toggling selection:', baseName, version);
+export function setSelectionState(
+	baseName: string | undefined,
+	version: 'v1' | 'v2' | 'none' | 'both' | 'mix'
+) {
+	if (baseName == null || baseName == undefined) {
+		return;
+	}
 
-	AppState.selections.set(baseName, AppState.selections.get(baseName) === version ? 'v1' : version);
+	// console.log('Toggling selection:', baseName, version);
+	// console.log('Selections:', AppState.selections.get(baseName));
+	AppState.selections.set(baseName, version);
 
 	// console.log('Selections:', AppState.selections.get(baseName));
 
@@ -130,15 +137,65 @@ export function toggleSelection(baseName: string, version: string) {
 export const pg = $state({
 	page: 0,
 	limit: 20,
-	size: AppState.imagePairs.length,
+	// size: AppState.imagePairs.length,
+	size: 0,
 	amounts: [20, 50, 100],
-	total: Math.ceil(AppState.imagePairs.length / AppSettings.v.itemsPerPage),
+	// total: Math.ceil(AppState.imagePairs.length / AppSettings.v.itemsPerPage),
+	total: 0,
 	noRight: false,
 	noLeft: false
 });
 
-export function getPaginatedPairs() {
-	// const start = (AppState.currentPage - 1) * AppSettings.v.itemsPerPage;
-	// const end = start + AppSettings.v.itemsPerPage;
-	return AppState.imagePairs.slice(pg.page * pg.limit, pg.page * pg.limit + pg.limit);
+export function getPaginatedPairs(useAppSettings: boolean) {
+	if (!useAppSettings) {
+		return AppState.imagePairs.slice(pg.page * pg.limit, pg.page * pg.limit + pg.limit);
+	}
+
+	// get current pair location in the paginated data. if the position is more than 2/3rd, then get new peginated pairs starting from half of itemsPerPage. return rolling pagination
+	const currentPairID = AppState.imagePairs.findIndex(
+		(pair) => pair.baseName === AppState.currentPair?.baseName
+	);
+
+	if (currentPairID === -1) {
+		return AppState.imagePairs.slice(0, AppSettings.v.itemsPerPage);
+	}
+
+	const itemsPerPage = AppSettings.v.itemsPerPage;
+	const totalPairs = AppState.imagePairs.length;
+	const threshold = Math.floor((2 / 3) * itemsPerPage);
+
+	let start = Math.max(0, currentPairID - Math.floor(itemsPerPage / 2));
+	let end = start + itemsPerPage;
+
+	if (currentPairID > threshold) {
+		start = Math.min(totalPairs - itemsPerPage, currentPairID - Math.floor(itemsPerPage / 2));
+		end = start + itemsPerPage;
+	}
+
+	return AppState.imagePairs.slice(start, end);
+}
+
+////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+
+// FUNCTION THROTTLING
+const throttleRecords: {
+	[key: string]: number;
+} = {};
+export function throttle(fn: Function, delay) {
+	const retrievedData = throttleRecords[fn.name] ?? null;
+	const now = Date.now();
+	if (!retrievedData) {
+		throttleRecords[fn.name] = now;
+	} else {
+		if (now - throttleRecords[fn.name] < delay) {
+			return () => {};
+		}
+	}
+
+	throttleRecords[fn.name] = now;
+	// return function (...args) {
+	// 	fn.apply(this, args);
+	// };
+	return fn;
 }
