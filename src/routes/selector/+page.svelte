@@ -1,19 +1,22 @@
 <script lang="ts">
-	import { AppSettings, AppState, getFileSysHandles } from '$lib/appState.svelte';
-	import { leftArrow } from '$lib/components/Paginator/icons';
-	import { doSelectionByDefault, scanImages, setSelectionState, pg } from '$lib/utils.svelte';
+	import {
+		AppSettings,
+		AppState,
+		getFileSysHandles,
+		handleKeyboardEvent,
+		mouseMoveHandler
+	} from '$lib/appState.svelte';
+	import { scanImages, setSelectionState, getPaginatedPairs, throttle } from '$lib/utils.svelte';
 	import { onMount } from 'svelte';
 
-	import { popup } from '@skeletonlabs/skeleton';
-	import type { PopupSettings } from '@skeletonlabs/skeleton';
-	import { autoPlacement } from '@floating-ui/dom';
+	AppState.bottomBar.show = true;
 
-	$effect(() => {
-		pg.noRight = pg.page === pg.total;
-		pg.noLeft = pg.page === 0;
-	});
+	let thumbnailScroll: HTMLDivElement;
 
 	onMount(async () => {
+		AppState.layout.bodyArea =
+			AppState.layout.svelteInnerHeight - (AppState.layout.topBar + AppState.layout.bottomBar);
+
 		let handles = await getFileSysHandles();
 		if (handles) {
 			AppState.v1DirFileSysHandle = handles.v1;
@@ -23,141 +26,132 @@
 		}
 
 		scanImages();
+
+		AppState.currentPair = getPaginatedPairs()[0];
 	});
 
-	function getPaginatedPairs() {
-		// const start = (AppState.currentPage - 1) * AppSettings.v.itemsPerPage;
-		// const end = start + AppSettings.v.itemsPerPage;
-		return AppState.imagePairs.slice(pg.page * pg.limit, pg.page * pg.limit + pg.limit);
-	}
+	$effect(() => {
+		let targetElement = document.querySelector(
+			'button[data-ScrollID="' + AppState.currentPair?.baseName + '"]'
+		);
+
+		if (!targetElement) return;
+
+		targetElement.scrollIntoView({
+			behavior: 'instant'
+		});
+
+		thumbnailScroll.scrollLeft +=
+			targetElement!.getBoundingClientRect().left - window?.innerWidth / 2.5;
+	});
 </script>
 
-<div class="image-grid" style="--pairs-per-row: {AppSettings.v.pairsPerRow}">
-	{#each getPaginatedPairs() as pair}
-		<div class="image-pair">
-			{#each ['v1', 'v2'] as version}
-				<div
-					class="card w-72 p-4 shadow-xl"
-					data-popup="popupImgInfo-{pair[version].name + version}"
-				>
-					<div><p>Demo Content</p></div>
-					<div class="bg-surface-100-800-token arrow"></div>
-				</div>
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<!-- svelte-ignore a11y_no_static_element_interactions -->
-				<div
-					class="image-container {AppState.selections.get(pair.baseName) === version
-						? 'outline outline-2 outline-offset-2 outline-cyan-500'
-						: ''} {version === 'v1' ? 'float-right' : 'float-left'}"
-					style="height: {AppSettings.v.imageHeight}px;"
-					onclick={() => setSelectionState(pair.baseName, version)}
-				>
+<svelte:window
+	bind:innerHeight={AppState.layout.svelteInnerHeight}
+	onkeypress={(e: KeyboardEvent) => {
+		handleKeyboardEvent(e.code);
+	}}
+	onmousemove={AppSettings.v.showNameInInfoBar
+		? (e) => {
+				throttle(mouseMoveHandler, 100)(e);
+			}
+		: null}
+/>
+
+<div
+	class="flex w-full flex-col gap-1 overflow-hidden p-1"
+	style="height: {AppState.layout.bodyArea}px;"
+>
+	<!-- Top buttons -->
+	<div class="[&>*]:my-0 [&>*]:py-0">
+		<button class="btn btn-sm">TOP TOOLBAR</button>
+		<button class="btn btn-sm">n</button>
+		<button class="btn btn-sm">Things</button>
+		<span class="divider-vertical"></span>
+		<button class="btn btn-sm">1</button>
+		<button class="btn btn-sm">2</button>
+	</div>
+
+	<!-- Thumbnails -->
+	<div
+		bind:this={thumbnailScroll}
+		class="flex shrink-0 gap-1 overflow-x-auto"
+		id="thumbnail-scroll"
+		onwheel={(e) => {
+			e.preventDefault();
+			thumbnailScroll.scrollLeft += e.deltaY;
+		}}
+	>
+		{#each getPaginatedPairs() as pair}
+			<button
+				data-infoBar={pair.baseName}
+				data-ScrollID={pair.baseName}
+				class="min-w-fit border {pair == AppState.currentPair
+					? 'brightness-125'
+					: 'border-gray-600 brightness-75'}"
+				onclick={() => {
+					AppState.bottomBar.statusText = 'loading...';
+					AppState.currentPair = pair;
+					setTimeout(() => {
+						AppState.bottomBar.statusText = '';
+					}, 1200);
+				}}
+			>
+				{#each ['v1', 'v2'] as version}
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					{#if pair[version]}
 						<img
+							class="inline border-b-4 {AppState.selections.get(pair.baseName) === version
+								? // ? ''
+									'border-warning-200'
+								: // : 'brightness-50'}"
+									'border-warning-900'}"
 							src={pair[version].url}
 							alt={pair[version].name}
-							class={version === 'v1' ? 'float-right' : 'float-left'}
-							style="height: {AppSettings.v.imageHeight}px; width: auto;"
-							use:popup={{
-								// Represents the type of event that opens/closed the popup
-								event: 'hover',
-								// Matches the data-popup value on your popup element
-								target: 'popupImgInfo-' + pair[version].name + version
-								// Defines which side of your trigger the popup will appear
-								// placement: version == 'v1' ? 'right' : 'left'
-							}}
+							style="height: {AppSettings.v.thumbnailSize}px; width: auto;"
 						/>
-					{:else}
-						<div>Missing {version.toUpperCase()}</div>
+						<!-- {:else}
+	<div>Missing {version.toUpperCase()}</div> -->
 					{/if}
-				</div>
-			{/each}
-			<p class="col-span-2 w-full text-center">{pair.baseName}</p>
-		</div>
-	{:else}
-		<p>Select V1 and V2 folders.</p>
-	{/each}
-</div>
+				{/each}
+			</button>
+			<span class="divider-vertical h-full"></span>
+		{:else}
+			<p>Select V1 and V2 folders.</p>
+		{/each}
+	</div>
 
-<div class="bottom-bar flex w-full justify-between bg-slate-800">
-	<!-- pairs per row -->
-	<label class="flex items-center gap-2">
-		<span>Pairsrow:</span>
-		<select class="select" bind:value={AppSettings.v.pairsPerRow}>
-			{#each [1, 2, 3] as pairs}
-				<option value={pairs}>{pairs}</option>
-			{/each}
-		</select>
-	</label>
-
-	<!-- image height -->
-	<label class="flex items-center gap-2">
-		<span>Image height:</span>
-		<select class="select" bind:value={AppSettings.v.imageHeight}>
-			{#each [100, 200, 300, 400, 500] as height}
-				<option value={height}>{height}</option>
-			{/each}
-		</select>
-	</label>
-
-	<!-- Amount per page -->
-	<label class="flex items-center gap-2">
-		<span>Items/page:</span>
-		<select
-			class="select"
-			bind:value={pg.limit}
-			onchange={() => {
-				pg.page = 0;
-				pg.total = Math.ceil(pg.size / pg.limit);
-			}}
-		>
-			{#each pg.amounts as amount}
-				<option value={amount}>{amount}</option>
-			{/each}
-		</select>
-	</label>
-
-	<!-- Paginator -->
-	<!-- TODO: BUTTON COLORS FIX -->
-	<div class="flex items-center gap-2 p-2 align-middle [&>button>img]:h-10 [&>button>img]:w-10">
-		<button onclick={() => (pg.page = 0)} disabled={pg.noLeft}>
-			<img src="/icons/left-edge-svgrepo-com.svg" alt="First" />
-		</button>
-		<button onclick={() => pg.page--} disabled={pg.noLeft}>
-			<img src="/icons/chevron-left-svgrepo-com.svg" alt="Previous" />
-		</button>
-
-		<span>{pg.page + 1} / {pg.total}</span>
-
-		<button onclick={() => pg.page++} disabled={pg.noRight}>
-			<img src="/icons/chevron-right-svgrepo-com.svg" alt="Next" />
-		</button>
-		<button onclick={() => (pg.page = pg.limit)} disabled={pg.noRight}>
-			<img src="/icons/right-edge-svgrepo-com.svg" alt="Last" />
-		</button>
+	<!-- Main view -->
+	<div
+		class="flex w-full grow gap-1 overflow-hidden"
+		bind:clientHeight={AppState.layout.largeViewImgHeight}
+	>
+		{#each ['v1', 'v2'] as version}
+			{#if AppState.currentPair}
+				<button
+					class="w-full"
+					onclick={() => {
+						setSelectionState(AppState.currentPair!.baseName, version);
+					}}
+				>
+					<img
+						data-infoBar="{version} - {AppState.currentPair!.baseName}"
+						class="h-full w-full grow border-4 object-contain {version === 'v1'
+							? 'object-right'
+							: 'object-left'} {AppState.selections.get(AppState.currentPair!.baseName) === version
+							? 'border-yellow-300'
+							: 'border-gray-400'}"
+						src={AppState.currentPair![version].url}
+						alt={AppState.currentPair![version].name}
+					/>
+				</button>
+			{/if}
+			{#if version == 'v1'}
+				<span class="divider-vertical h-full"></span>
+			{/if}
+		{/each}
 	</div>
 </div>
 
-<style>
-	.image-grid {
-		display: grid;
-		/* grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); */
-		grid-template-columns: repeat(var(--pairs-per-row), 1fr);
-		gap: 20px;
-		padding: 20px;
-		/* max-height: calc(100vh - 120px); */
-		overflow-y: auto;
-	}
-	.image-pair {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 10px;
-		row-gap: 5px;
-		border: 1px solid #ddd;
-		padding: 5px;
-	}
-	.image-container {
-		object-fit: contain;
-		cursor: pointer;
-	}
-</style>
+<!-- Thumbnail printing -->

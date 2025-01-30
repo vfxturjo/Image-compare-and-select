@@ -1,6 +1,42 @@
-import { AppSettings, AppState, type foundFile } from './appState.svelte';
+import { get } from 'idb-keyval';
+import {
+	AppSettings,
+	AppState,
+	saveFileSysHandle,
+	type foundFile,
+	type foundPair
+} from './appState.svelte';
 
-export async function scanImages() {
+export async function pickDirectory(version: string, skipPicker = false, forceRecheck = false) {
+	try {
+		let handle: FileSystemDirectoryHandle;
+		if (!skipPicker) {
+			handle = await (window as any).showDirectoryPicker();
+		} else {
+			handle = await get(version).then((h) => h as FileSystemDirectoryHandle);
+		}
+		const pathName = handle.name;
+
+		if (version === 'v1') {
+			AppSettings.v.v1DirPath = pathName;
+			AppState.v1DirFileSysHandle = handle;
+			saveFileSysHandle('v1', handle);
+		} else if (version === 'v2') {
+			AppSettings.v.v2DirPath = pathName;
+			AppState.v2DirFileSysHandle = handle;
+			saveFileSysHandle('v2', handle);
+		} else if (version === 'convOut') {
+			AppSettings.v.otherDirs.convOut = pathName;
+			AppState.converter.outputDirFileSysHandle = handle;
+			saveFileSysHandle('convOut', handle);
+		}
+		scanImages(forceRecheck);
+	} catch (error) {
+		console.log('Directory picker canceled');
+	}
+}
+
+export async function scanImages(forceRecheck = false) {
 	AppSettings.v.dirsOk = false;
 
 	let v1Files: foundFile[] = [];
@@ -14,7 +50,9 @@ export async function scanImages() {
 		AppState.v2Len = v2Files.length;
 	}
 	if (!AppState.v1DirFileSysHandle || !AppState.v2DirFileSysHandle) {
-		return;
+		if (!forceRecheck) {
+			return;
+		}
 	}
 
 	AppSettings.v.dirsOk = true;
@@ -48,6 +86,12 @@ export async function scanImages() {
 	AppState.imagePairs = AppState.imagePairsAll.filter(
 		(p) => !p.v1?.name.match(/\.heic$/i) && !p.v2?.name.match(/\.heic$/i)
 	);
+
+	// set whichFolderHeic using imagePairsHeic array. The folder with extension of heic will be outputted and set
+	if (AppState.imagePairsHeic.length > 0) {
+		const heicPair = AppState.imagePairsHeic[0];
+		AppState.whichFolderHeic = heicPair.v1?.name.match(/\.heic$/i) ? 'v1' : 'v2';
+	}
 
 	doSelectionByDefault(AppSettings.v.defaultSelection);
 }
@@ -115,6 +159,24 @@ export async function handleFileOperation(isMove: boolean) {
 	}
 }
 
+// another generic fileCopyMove function for moving non heic files
+export async function fileCopyMove(
+	array: foundPair[],
+	folderhandle: FileSystemDirectoryHandle,
+	isMove: boolean
+) {
+	for (let i = 0; i < array.length; i++) {
+		let nowfile = array[i];
+		const fileHandle = nowfile.handle;
+		const outputFile = await folderhandle.getFileHandle(nowfile.name, { create: true });
+		const writable = await outputFile.createWritable();
+		nowfile = await fileHandle.getFile();
+		await writable.write(nowfile);
+		await writable.close();
+		if (isMove) await fileHandle.remove();
+	}
+}
+
 // INTERACTIONS
 
 export function setSelectionState(
@@ -134,24 +196,7 @@ export function setSelectionState(
 	updateSelectionCount();
 }
 
-export const pg = $state({
-	page: 0,
-	limit: 20,
-	// size: AppState.imagePairs.length,
-	size: 0,
-	amounts: [20, 50, 100],
-	// total: Math.ceil(AppState.imagePairs.length / AppSettings.v.itemsPerPage),
-	total: 0,
-	noRight: false,
-	noLeft: false
-});
-
-export function getPaginatedPairs(useAppSettings: boolean) {
-	if (!useAppSettings) {
-		return AppState.imagePairs.slice(pg.page * pg.limit, pg.page * pg.limit + pg.limit);
-	}
-
-	// get current pair location in the paginated data. if the position is more than 2/3rd, then get new peginated pairs starting from half of itemsPerPage. return rolling pagination
+export function getPaginatedPairs() {
 	const currentPairID = AppState.imagePairs.findIndex(
 		(pair) => pair.baseName === AppState.currentPair?.baseName
 	);

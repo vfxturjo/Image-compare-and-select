@@ -10,9 +10,14 @@ export interface foundFile {
 }
 
 export interface foundPair {
-	baseName: string;
-	v1?: foundFile;
-	v2?: foundFile;
+	[key: string]: {
+		baseName: string;
+		url: string;
+		name: string;
+	};
+	// baseName: string;
+	// v1?: foundFile;
+	// v2?: foundFile;
 }
 
 const defaultAppSettings = {
@@ -20,9 +25,12 @@ const defaultAppSettings = {
 	v2DirPath: '',
 	v1DirName: 'Dir1',
 	v2DirName: 'Dir2',
+	otherDirs: {
+		convOut: ''
+	},
 	defaultSelection: 'v1',
 	itemsPerPage: 20,
-	thumbnailSize: 200,
+	thumbnailSize: 50,
 	spacing: 10,
 	dirsOk: false,
 	imageFullscreenView: true,
@@ -47,6 +55,7 @@ export const AppState = $state({
 	currentPage: 1,
 	status: { v1: 0, v2: 0 },
 	heicCount: 0,
+	whichFolderHeic: 'v1',
 	currentPair: null as foundPair | null,
 	layout: {
 		topBar: 56,
@@ -56,7 +65,18 @@ export const AppState = $state({
 		largeViewImgHeight: 0
 	},
 	currentPairID: 0,
-	bottomBarText: ''
+	bottomBar: {
+		show: false,
+		statusText: '',
+		showId: true
+	},
+	converter: {
+		inputDirFileSysHandle: null as FileSystemDirectoryHandle | null,
+		jpegQuality: 80,
+		outputDirFileSysHandle: null as FileSystemDirectoryHandle | null,
+		progress: 0,
+		startTime: 0
+	}
 });
 
 export function saveFileSysHandle(key: string, handle: FileSystemDirectoryHandle | null) {
@@ -83,7 +103,6 @@ export function resetAllSettings() {
 }
 
 export function handleKeyboardEvent(key: string) {
-	console.log(key);
 	switch (key) {
 		case 'Space':
 		case 'Numpad6':
@@ -132,8 +151,7 @@ function getPairRelative(relPos: number) {
 }
 
 export function mouseMoveHandler(e: MouseEvent) {
-	console.log(e);
-	AppState.bottomBarText =
+	AppState.bottomBar.statusText =
 		(e.target as HTMLDivElement).getAttribute('data-infobar') ??
 		((e.target as HTMLDivElement).parentNode as HTMLElement)?.getAttribute('data-infobar') ??
 		((e.target as HTMLDivElement).parentNode as HTMLElement)?.parentElement?.getAttribute(

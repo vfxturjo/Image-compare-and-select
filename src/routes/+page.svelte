@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import {
 		AppSettings,
 		AppState,
@@ -6,9 +7,12 @@
 		saveFileSysHandle,
 		type foundFile
 	} from '$lib/appState.svelte';
-	import { doSelectionByDefault, scanImages } from '$lib/utils.svelte';
+	import { doSelectionByDefault, pickDirectory, scanImages } from '$lib/utils.svelte';
 	import { get } from 'idb-keyval';
 	import { onMount } from 'svelte';
+
+	AppState.bottomBar.show = false;
+
 	onMount(() => {
 		if (AppSettings.v.v1DirPath !== '') {
 			pickDirectory('v1', true);
@@ -17,33 +21,6 @@
 			pickDirectory('v2', true);
 		}
 	});
-
-	async function pickDirectory(version: string, skipPicker = false) {
-		try {
-			let handle: FileSystemDirectoryHandle;
-			if (!skipPicker) {
-				handle = await (window as any).showDirectoryPicker();
-			} else {
-				handle = await get(version === 'v1' ? 'v1' : 'v2').then(
-					(h) => h as FileSystemDirectoryHandle
-				);
-			}
-			const pathName = handle.name;
-
-			if (version === 'v1') {
-				AppSettings.v.v1DirPath = pathName;
-				AppState.v1DirFileSysHandle = handle;
-				saveFileSysHandle('v1', handle);
-			} else {
-				AppSettings.v.v2DirPath = pathName;
-				AppState.v2DirFileSysHandle = handle;
-				saveFileSysHandle('v2', handle);
-			}
-			scanImages();
-		} catch (error) {
-			console.log('Directory picker canceled');
-		}
-	}
 </script>
 
 <div class="card flex w-full justify-between gap-4 p-4">
@@ -85,34 +62,44 @@
 	{/each}
 </div>
 
-<div class="card flex flex-col gap-4 p-4">
-	<!-- overlaps information -->
-	{#if AppSettings.v.dirsOk}
-		<p class="text-center">
-			<span class="h3 font-bold {AppState.overlaps === 0 ? 'text-error-500' : 'text-success-500'}"
-				>{AppState.overlaps}</span
-			> overlaps found!
-		</p>
-
-		<!-- number of heic images -->
-		{#if AppState.heicCount > 0}
+<div class="flex">
+	<div class="card flex grow-[2] basis-32 flex-col gap-4 p-4">
+		<!-- overlaps information -->
+		{#if AppSettings.v.dirsOk}
 			<p class="text-center">
-				but...
-				<span class="h3 font-bold text-error-500">{AppState.heicCount}</span>
-				HEIC images found! <br /> (HEIC images will be ignored for now, as they are not supported...
-				yet)
-				<br />
-				(2 types of solutions: convert to jpg or use a library to read them)
-				<br />
-				so... effective overlaps:
-				<span class="h3 font-bold text-success-500">{AppState.imagePairs.length}</span>
+				<span class="h3 font-bold {AppState.overlaps === 0 ? 'text-error-500' : 'text-success-500'}"
+					>{AppState.overlaps}</span
+				> overlaps found!
 			</p>
+
+			<!-- number of heic images -->
+			{#if AppState.heicCount > 0}
+				<p class="text-center">
+					but...
+					<span class="h3 font-bold text-error-500">{AppState.heicCount}</span>
+					HEIC images found! <br /> (HEIC images will be ignored for now, as they are not
+					supported... yet)
+					<br />
+					(2 types of solutions: convert to jpg or use a library to read them)
+					<br />
+					so... effective overlaps:
+					<span class="h3 font-bold text-success-500">{AppState.imagePairs.length}</span>
+				</p>
+			{/if}
+		{:else if AppState.v1DirFileSysHandle && AppState.v2DirFileSysHandle}
+			<p class="text-center opacity-50">Scanning directories...</p>
+		{:else}
+			<p class="text-center opacity-50">Choose directories to start comparing images.</p>
 		{/if}
-	{:else if AppState.v1DirFileSysHandle && AppState.v2DirFileSysHandle}
-		<p class="text-center opacity-50">Scanning directories...</p>
-	{:else}
-		<p class="text-center opacity-50">Choose directories to start comparing images.</p>
+	</div>
+	{#if AppState.heicCount > 0}
+		<div class="flex grow-[1] basis-1 items-center justify-center">
+			<button class="variant-filled-primary btn btn-lg" onclick={() => goto('/ImageConvert')}
+				>Convert them!</button
+			>
+		</div>
 	{/if}
+	<div></div>
 </div>
 
 <div class="card flex items-center gap-4 p-4 {AppState.overlaps < 1 ? 'opacity-50' : ''}">
