@@ -72,7 +72,7 @@ stack the pair like before-after comparison, see changes by swiping mouse. This 
   - if difference is medium, compare the image visually to see how much different.
   - if difference is higher, they are differnt
 
-#### more export options
+#### More export options
 
 - **export none or both**
 
@@ -84,13 +84,18 @@ stack the pair like before-after comparison, see changes by swiping mouse. This 
 
 #### Side mini gallery view:
 
-- mini thumbails
-- show grouped items closer, other items a bit seperated
+- mini thumbnails
+- show grouped items closer, other items a bit separated
 - scroll smoothly
-- like the vscode scroll view
+- like the vs code scroll view
 
 #### Let users change the keybindings:
 
-- create a mini info popup at bottom to show the shortcuts
+- create a mini info popup at the bottom to show the shortcuts
 - it will have a button to open keybindings modal/drawer
 - there will be 2 buttons bindable per option
+- 
+
+#### Add a visual indicator of the selected item 
+
+When using the "select side and show next" options, it may not be immediately clear which side is selected. Adding a visual indicator, such as a simple icon that flashes on the selected side, along with a flashing selection counter in the top bar, would improve the user experience.
