@@ -1,6 +1,34 @@
 # Image-compare-and-select
 
 Lets you compare images in local hard drive folders pair-wise, select one from each pair (or none/both), and copy/move them to another output folder!
+live at: https://vfxturjo.github.io/Image-compare-and-select/
+
+# How and Why:
+
+I sometimes use AI to enhance images in bulk. Sometimes the AI spits out a better image, sometimes I feel like the original was better. So, I was looking for comparing images pair-wise from two separate directories. As I couldn't find any, I made this app. As it is still in its first development phase, only the main features are working. I will add more features and refine the UX when I get more time.
+
+Open the web app, select two directories where images exist with the same name. I name the first one "Original" and the second one "Enhanced” and choose my folders accordingly. Sometimes there are HEIC files from a camera which cannot be easily loaded in web apps, so you will get an option to convert them if you want.
+The app will only show pairs. If other files exist in the folders, it will simply ignore them.
+I select the "Enhanced" one as the default selection, as most of the time I go with the AI-corrected one, and only sometimes prefer the original one.
+Then, in the comparing page, you can use these shortcuts:
+
+- Numpad 6 or Space: Show next pair
+- Numpad 4: Show previous pair
+- Numpad 1 or key A: Select left and show next pair
+- Numpad 3 or key D: Select right and show next pair
+- Numpad Minus: Select none
+
+Btw, you can change the top thumbnail size in view settings popup, available from top bar.
+
+After selection, you can open export option from the top bar, and choose to copy/move the selected items to another folder.
+
+Enjoy!
+
+---
+
+---
+
+ignore the following area...
 
 # Todo:
 
@@ -60,3 +88,9 @@ stack the pair like before-after comparison, see changes by swiping mouse. This 
 - show grouped items closer, other items a bit seperated
 - scroll smoothly
 - like the vscode scroll view
+
+#### Let users change the keybindings:
+
+- create a mini info popup at bottom to show the shortcuts
+- it will have a button to open keybindings modal/drawer
+- there will be 2 buttons bindable per option
