@@ -9,16 +9,7 @@
         },
         {
             "title": "To-Do",
-            "tasks": [
-                {
-                    "text": "let users save the selection progress",
-                    "id": "mxfdndv5oa0jx0vz7i7k7aw4"
-                },
-                {
-                    "text": "Beautify export dialog\n",
-                    "id": "od2ndd1qmgy53jyaqecb7p0o"
-                }
-            ],
+            "tasks": [],
             "id": "v5vd0t4xmk9knzvh6oboec8v",
             "color": "#fcb900"
         },
@@ -30,12 +21,21 @@
         },
         {
             "title": "Done",
-            "tasks": [],
+            "tasks": [
+                {
+                    "text": "let users save the selection progress",
+                    "id": "mxfdndv5oa0jx0vz7i7k7aw4"
+                },
+                {
+                    "text": "Beautify export dialog\n",
+                    "id": "od2ndd1qmgy53jyaqecb7p0o"
+                }
+            ],
             "id": "avismn9360dlx84jtkmypaa6",
             "color": "#00d084"
         }
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1738340238574
+    "timestamp": 1738354882076
 }

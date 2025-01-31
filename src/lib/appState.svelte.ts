@@ -34,7 +34,8 @@ const defaultAppSettings = {
 	spacing: 10,
 	dirsOk: false,
 	imageFullscreenView: true,
-	showNameInInfoBar: false
+	showNameInInfoBar: false,
+	defaultNotificationDuration: 2500
 };
 
 export const AppSettings = new PersistedStateObjectAdvanced('app-settings', defaultAppSettings, {
@@ -77,6 +78,11 @@ export const AppState = $state({
 		progress: 0,
 		startTime: 0
 	}
+});
+
+export const appTempStates = $state({
+	Selections_saved: false,
+	Selections_reset_done: false
 });
 
 export function saveFileSysHandle(key: string, handle: FileSystemDirectoryHandle | null) {

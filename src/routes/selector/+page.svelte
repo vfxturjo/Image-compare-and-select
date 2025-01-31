@@ -6,7 +6,14 @@
 		handleKeyboardEvent,
 		mouseMoveHandler
 	} from '$lib/appState.svelte';
-	import { scanImages, setSelectionState, getPaginatedPairs, throttle } from '$lib/utils.svelte';
+	import {
+		scanImages,
+		setSelectionState,
+		getPaginatedPairs,
+		throttle,
+		updateSelectionCount,
+		loadSavedSelections
+	} from '$lib/utils.svelte';
 	import { onMount } from 'svelte';
 
 	AppState.bottomBar.show = true;
@@ -25,9 +32,11 @@
 			console.log('No handles found');
 		}
 
-		scanImages();
+		await scanImages();
 
 		AppState.currentPair = getPaginatedPairs()[0];
+
+		await loadSavedSelections();
 	});
 
 	$effect(() => {
@@ -132,7 +141,10 @@
 				<button
 					class="w-full"
 					onclick={() => {
-						setSelectionState(AppState.currentPair!.baseName, version);
+						setSelectionState(
+							AppState.currentPair!.baseName as unknown as string,
+							version as 'v1' | 'v2' | 'none' | 'both' | 'mix'
+						);
 					}}
 				>
 					<img

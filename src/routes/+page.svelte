@@ -31,30 +31,30 @@
 	</button>
 </div>
 
-<div class="card flex flex-col gap-8 p-4">
+<div class="card flex flex-col gap-4 p-4">
 	{#each ['v1', 'v2'] as version}
 		<label class="label">
-			<h3 class="h3">{version === 'v1' ? 'First Folder' : 'Second Folder'}</h3>
+			<h4 class="h4">{version === 'v1' ? 'First Folder' : 'Second Folder'}</h4>
 			<!-- default folder selector radio -->
 			<div class="flex gap-4">
 				<input
 					class="input w-1/2"
 					type="text"
 					placeholder="Custom name?"
-					bind:value={AppSettings.v[version + 'DirName']}
+					bind:value={AppSettings.v[`${version}DirName` as 'v1DirName' | 'v2DirName']}
 				/>
 				<button class="variant-filled btn w-1/2" onclick={() => pickDirectory(version)}>
-					{AppSettings.v[version + 'DirPath'] === ''
+					{AppSettings.v[`${version}DirPath` as 'v1DirPath' | 'v2DirPath'] === ''
 						? 'Choose a directory'
-						: AppSettings.v[version + 'DirPath']}
+						: AppSettings.v[`${version}DirPath` as 'v1DirPath' | 'v2DirPath']}
 				</button>
 				<p class="w-1/6 text-sm text-gray-500">
 					<span
-						class="font-bold {AppState[version + 'Len'] < 1
+						class="font-bold {AppState[`${version}Len` as 'v1Len' | 'v2Len'] < 1
 							? 'text-error-500'
 							: 'text-warning-500'}"
 					>
-						{AppState[version + 'Len']}
+						{AppState[`${version}Len` as 'v1Len' | 'v2Len']}
 					</span> <br />
 					images found
 				</p>
@@ -70,21 +70,21 @@
 			<p class="text-center">
 				<span class="h3 font-bold {AppState.overlaps === 0 ? 'text-error-500' : 'text-success-500'}"
 					>{AppState.overlaps}</span
-				> overlaps found!
+				>
+				overlaps found!
+				{#if AppState.heicCount > 0}
+					Effective overlaps:
+					<span class="h3 font-bold text-success-500">{AppState.imagePairs.length}</span>
+				{/if}
 			</p>
 
 			<!-- number of heic images -->
 			{#if AppState.heicCount > 0}
 				<p class="text-center">
-					but...
+					because...
 					<span class="h3 font-bold text-error-500">{AppState.heicCount}</span>
-					HEIC images found! <br /> (HEIC images will be ignored for now, as they are not
-					supported... yet)
-					<br />
-					(2 types of solutions: convert to jpg or use a library to read them)
-					<br />
-					so... effective overlaps:
-					<span class="h3 font-bold text-success-500">{AppState.imagePairs.length}</span>
+					HEIC images found! <br /> (HEIC images will be ignored for now, as they are not supported...
+					yet... convert to jpg to read them)
 				</p>
 			{/if}
 		{:else if AppState.v1DirFileSysHandle && AppState.v2DirFileSysHandle}
@@ -109,7 +109,7 @@
 		class="select w-1/2 overflow-hidden p-2"
 		size="3"
 		bind:value={AppSettings.v.defaultSelection}
-		onchange={(event) => doSelectionByDefault(event.target.value)}
+		onchange={(event) => doSelectionByDefault((event.target as HTMLSelectElement).value)}
 	>
 		<option value="">None</option>
 		<option value="v1">{AppSettings.v.v1DirName}</option>

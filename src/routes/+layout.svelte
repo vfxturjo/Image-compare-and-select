@@ -7,8 +7,13 @@
 	import { base } from '$app/paths';
 
 	import { AppBar } from '@skeletonlabs/skeleton';
-	import { AppSettings, AppState } from '$lib/appState.svelte';
-	import { handleFileOperation } from '$lib/utils.svelte';
+	import { AppSettings, AppState, appTempStates } from '$lib/appState.svelte';
+	import {
+		handleFileOperation,
+		loadSavedSelections,
+		resetSavedSelections,
+		saveCurrentSelections
+	} from '$lib/utils.svelte';
 
 	// bottom bar
 	import { page } from '$app/state';
@@ -22,7 +27,6 @@
 	import { getDrawerStore } from '@skeletonlabs/skeleton';
 
 	import { storePopup } from '@skeletonlabs/skeleton';
-	import { onMount } from 'svelte';
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 
 	initializeStores();
@@ -32,7 +36,7 @@
 
 <Drawer>
 	{#if $drawerStore.id === 'exporterDrawer'}
-		{@render exporter()}
+		<!-- {@render exporter()} -->
 	{:else}
 		<!-- (fallback contents) -->
 		<div class="flex h-full items-center justify-center">
@@ -57,6 +61,18 @@
 				class="btn btn-sm p-0"
 				use:popup={{
 					event: 'click',
+					target: 'popupSelectionSaveLoad',
+					placement: 'bottom',
+					closeQuery: '#will-close'
+				} as PopupSettings}
+			>
+				{@render saveIcon()}
+			</button>
+
+			<button
+				class="btn btn-sm p-0"
+				use:popup={{
+					event: 'click',
 					target: 'popupViewSettings',
 					placement: 'bottom',
 					closeQuery: '#will-close'
@@ -66,13 +82,15 @@
 			</button>
 
 			<button
-				class="variant-filled-primary btn btn-sm m-0 py-0"
-				onclick={() =>
-					drawerStore.open({
-						id: 'exporterDrawer'
-					})}
+				class="variant-filled-primary btn btn-sm m-0 py-0.5"
+				use:popup={{
+					event: 'click',
+					target: 'popupExporter',
+					placement: 'bottom',
+					closeQuery: '#will-close'
+				} as PopupSettings}
 			>
-				<span> Export </span>
+				<span class="text-white"> Export </span>
 				<span>
 					{@render exportIcon()}
 				</span>
@@ -102,14 +120,49 @@
 	</div>
 {/if}
 
-{#snippet exporter()}
-	<!-- TODO: MAKE THEM POLISHED -->
-	<p>Export Selection</p>
-	<div class="variant-filled-primary m-2 flex flex-col gap-2">
-		<button class="btn btn-sm p-0" onclick={() => handleFileOperation(true)}>(Move)</button>
-		<button class="btn btn-sm p-0" onclick={() => handleFileOperation(false)}>(Copy)</button>
+<div class="card gap-2 p-4 shadow-xl" data-popup="popupSelectionSaveLoad">
+	<div class="flex justify-between">
+		<h3 class="h3 pr-4">Save and Load Selections</h3>
+		<button class="variant-outline btn btn-sm" id="will-close">✕</button>
 	</div>
-{/snippet}
+	<hr class="my-2" />
+
+	<div
+		class="gap-y-2 text-center [&>button]:variant-filled-primary [&>button]:btn [&>button]:m-2 [&>button]:w-4/5"
+	>
+		<button onclick={saveCurrentSelections}
+			>{#if AppState.selections.size > 0}
+				{#if appTempStates.Selections_saved === false}
+					Save
+				{:else}
+					Saved!
+				{/if}
+			{/if}</button
+		>
+		<button class="variant-filled-error" onclick={resetSavedSelections}>
+			{#if appTempStates.Selections_reset_done === false}
+				Reset
+			{:else}
+				Reset Complete!
+			{/if}
+		</button>
+	</div>
+</div>
+
+<div class="card gap-2 p-4 shadow-xl" data-popup="popupExporter">
+	<div class="flex justify-between">
+		<h3 class="h3 pr-4">Export Selection</h3>
+		<button class="variant-outline btn btn-sm" id="will-close">✕</button>
+	</div>
+	<hr class="my-2" />
+
+	<div
+		class="gap-y-2 text-center [&>button]:variant-filled-primary [&>button]:btn [&>button]:m-2 [&>button]:w-4/5"
+	>
+		<button onclick={() => handleFileOperation(true)}>Move</button>
+		<button onclick={() => handleFileOperation(false)}>Copy</button>
+	</div>
+</div>
 
 <!-- POPUP DATA -->
 
@@ -163,6 +216,20 @@
 			d="M269.4,273.8h-18.7L232,255.1h-37.5l-18.7,18.7H157c0,0-18.7,0-18.7,18.7c0,10,0,44.1,0,56.2c0,18.7,18.7,18.7,18.7,18.7
 			s99.7,0,112.4,0c18.7,0,18.7-18.7,18.7-18.7s0-37.5,0-56.2C288.1,273.8,269.4,273.8,269.4,273.8z M213.2,348.8
 			c-15.5,0-28.1-12.6-28.1-28.1c0-15.5,12.6-28.1,28.1-28.1c15.5,0,28.1,12.6,28.1,28.1C241.3,336.2,228.7,348.8,213.2,348.8z"
+		/>
+	</svg>
+{/snippet}
+
+{#snippet saveIcon()}
+	<svg class="btn m-0 h-5 w-5 fill-primary-200 p-0" viewBox="0 0 407.096 407.096">
+		<path
+			d="M402.115,84.008L323.088,4.981C319.899,1.792,315.574,0,311.063,0H17.005C7.613,0,0,7.614,0,17.005v373.086
+			 c0,9.392,7.613,17.005,17.005,17.005h373.086c9.392,0,17.005-7.613,17.005-17.005V96.032
+			 C407.096,91.523,405.305,87.197,402.115,84.008z M300.664,163.567H67.129V38.862h233.535V163.567z"
+		/>
+		<path
+			d="M214.051,148.16h43.08c3.131,0,5.668-2.538,5.668-5.669V59.584c0-3.13-2.537-5.668-5.668-5.668h-43.08
+			 c-3.131,0-5.668,2.538-5.668,5.668v82.907C208.383,145.622,210.92,148.16,214.051,148.16z"
 		/>
 	</svg>
 {/snippet}
