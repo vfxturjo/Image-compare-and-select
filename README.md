@@ -49,8 +49,13 @@ ignore the following area...
 - unload if
   - image pair selection is done, and scrolled past it with 10 images difference
 - if possible, load the images in user screen resolution, instead of full size?
+- optimize the converter. reduce JS->C->JS roundtrips
 
 ### UX improvement
+
+#### Add a visual indicator of the selected item 
+
+When using the "select side and show next" options, it may not be immediately clear which side is selected. Adding a visual indicator, such as a simple icon that flashes on the selected side, along with a flashing selection counter in the top bar, would improve the user experience.
 
 #### overlap + compare
 
@@ -94,8 +99,3 @@ stack the pair like before-after comparison, see changes by swiping mouse. This 
 - create a mini info popup at the bottom to show the shortcuts
 - it will have a button to open keybindings modal/drawer
 - there will be 2 buttons bindable per option
-- 
-
-#### Add a visual indicator of the selected item 
-
-When using the "select side and show next" options, it may not be immediately clear which side is selected. Adding a visual indicator, such as a simple icon that flashes on the selected side, along with a flashing selection counter in the top bar, would improve the user experience.
