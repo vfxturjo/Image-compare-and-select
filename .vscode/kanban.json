@@ -9,7 +9,16 @@
         },
         {
             "title": "To-Do",
-            "tasks": [],
+            "tasks": [
+                {
+                    "text": "let users save the selection progress",
+                    "id": "mxfdndv5oa0jx0vz7i7k7aw4"
+                },
+                {
+                    "text": "Beautify export dialog\n",
+                    "id": "od2ndd1qmgy53jyaqecb7p0o"
+                }
+            ],
             "id": "v5vd0t4xmk9knzvh6oboec8v",
             "color": "#fcb900"
         },
@@ -28,5 +37,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1737789423305
+    "timestamp": 1738340238574
 }

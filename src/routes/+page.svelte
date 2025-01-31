@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import {
 		AppSettings,
 		AppState,
@@ -94,7 +95,7 @@
 	</div>
 	{#if AppState.heicCount > 0}
 		<div class="flex grow-[1] basis-1 items-center justify-center">
-			<button class="variant-filled-primary btn btn-lg" onclick={() => goto('/ImageConvert')}
+			<button class="variant-filled-primary btn btn-lg" onclick={() => goto(`${base}/ImageConvert`)}
 				>Convert them!</button
 			>
 		</div>
@@ -117,7 +118,10 @@
 </div>
 
 <div class="card flex justify-center p-4">
-	<a href="/selector" class="variant-filled btn w-1/2 {AppState.overlaps < 1 ? 'disabled' : ''}">
+	<a
+		href="{base}/selector"
+		class="variant-filled btn w-1/2 {AppState.overlaps < 1 ? 'disabled' : ''}"
+	>
 		Start Comparing
 	</a>
 </div>

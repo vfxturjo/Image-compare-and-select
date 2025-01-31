@@ -1,11 +1,14 @@
 <script lang="ts">
+	export const prerender = true;
+	export const trailingSlash = 'always';
+
 	import '../app.css';
 	let { children } = $props();
+	import { base } from '$app/paths';
 
 	import { AppBar } from '@skeletonlabs/skeleton';
 	import { AppSettings, AppState } from '$lib/appState.svelte';
 	import { handleFileOperation } from '$lib/utils.svelte';
-	export const ssr = false;
 
 	// bottom bar
 	import { page } from '$app/state';
@@ -42,7 +45,7 @@
 	<svelte:fragment slot="lead">
 		{@render AppLogo()}
 	</svelte:fragment>
-	<a href="/" class="btn btn-sm p-0">PhotoJudge</a>
+	<a href="{base}/" class="btn btn-sm p-0">PhotoJudge</a>
 	<svelte:fragment slot="trail">
 		{#if AppSettings.v.dirsOk}
 			<div class="variant-filled btn-group [&>*]:px-2">
@@ -75,7 +78,7 @@
 				</span>
 			</button>
 		{:else}
-			<a href="/" class="btn btn-sm p-0">☠ Choose directories!!!</a>
+			<a href="{base}/" class="btn btn-sm p-0">☠ Choose directories!!!</a>
 		{/if}
 	</svelte:fragment>
 </AppBar>
