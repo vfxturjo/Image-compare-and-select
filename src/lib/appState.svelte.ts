@@ -111,11 +111,14 @@ export function resetAllSettings() {
 export function handleKeyboardEvent(key: string) {
 	switch (key) {
 		case 'Space':
+		case 'KeyE':
 		case 'Numpad6':
 			// Show next pair
 			getPairRelative(1);
 			break;
 		case 'Numpad4':
+		case 'KeyArrowLeft':
+		case 'KeyQ':
 			// Show previous pair
 			getPairRelative(-1);
 			break;
@@ -136,6 +139,7 @@ export function handleKeyboardEvent(key: string) {
 			}
 			break;
 		case 'NumpadSubtract':
+		case 'KeyX':
 			setSelectionState(AppState.currentPair?.baseName, 'none');
 			break;
 		default:
