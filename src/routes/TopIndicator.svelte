@@ -1,52 +1,27 @@
 <script lang="ts">
+	import { topIndicatorStore } from '$lib/appState.svelte';
 	import { fade } from 'svelte/transition';
-	let topIndicator: HTMLDivElement;
-	// import { TopIndicatorStore } from '$lib/appState.svelte';
-
-	// const topIndicatorStore = new TopIndicatorStore();
-
-	let { inside_HTML = '', anchorElement = null, timeout = 200 } = $props();
-
-	// make this $effect in future
-	$effect(() => {
-		if (anchorElement != null) {
-			const boundingBox = anchorElement.getBoundingClientRect();
-			if (topIndicator != null) {
-				topIndicator.style.top = `${boundingBox.top}px`;
-				topIndicator.style.left = `${boundingBox.left}px`;
-				topIndicator.style.width = `${boundingBox.width}px`;
-				topIndicator.style.height = `${boundingBox.height}px`;
-			}
-		} else {
-			topIndicator.style.top = '0px';
-			topIndicator.style.left = '0px';
-			topIndicator.style.width = '100%';
-			topIndicator.style.height = '100%';
-		}
-	});
-
-	let timeOutHandle: ReturnType<typeof setTimeout>;
 
 	$effect(() => {
-		if (timeOutHandle != null) {
-			clearTimeout(timeOutHandle);
-		}
-
-		if ('' == inside_HTML.toString()) {
-			return;
-		}
-
-		timeOutHandle = setTimeout(() => {
-			inside_HTML = '';
-			anchorElement = null;
-		}, timeout);
+		console.log(topIndicatorStore.getLength());
 	});
 </script>
 
-<div class="centerThings pointer-events-none fixed z-50" bind:this={topIndicator}>
-	{#if inside_HTML.toString() != ''}
-		<div class="centerThings h-full w-full bg-gray-500 bg-opacity-15" out:fade>
-			{@html inside_HTML}
+{#if topIndicatorStore.getLength() > 0}
+	{#each topIndicatorStore.getTopIndicators() as topIndicatorObject}
+		<div
+			class="centerThings pointer-events-none absolute z-50 bg-gray-500 bg-opacity-20"
+			out:fade|global={{ duration: topIndicatorObject.fadeDuration }}
+			style={`top: ${topIndicatorObject.top}px; 
+				   left: ${topIndicatorObject.left}px; 
+				   width: ${topIndicatorObject.width}px; 
+				   height: ${topIndicatorObject.height}px;`}
+		>
+			<!-- {#if topIndicatorObject.innerHTML.toString() != ''}
+				<div class="centerThings h-full w-full bg-gray-500 bg-opacity-15" out:fade> -->
+			{@html topIndicatorObject.innerHTML}
+			<!-- </div>
+			{/if} -->
 		</div>
-	{/if}
-</div>
+	{/each}
+{/if}

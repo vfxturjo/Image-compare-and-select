@@ -12,7 +12,8 @@
 		AppState,
 		appTempStates,
 		defaultKeyboardSettings,
-		KeySettings
+		KeySettings,
+		topIndicatorStore
 	} from '$lib/appState.svelte';
 	import {
 		handleFileOperation,
@@ -35,8 +36,6 @@
 		Toast,
 		getToastStore
 	} from '@skeletonlabs/skeleton';
-
-	initializeStores();
 
 	import { storePopup } from '@skeletonlabs/skeleton';
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
@@ -92,7 +91,7 @@
 	let inside_HTML_things = $state('');
 </script>
 
-<TopIndicator inside_HTML={inside_HTML_things} />
+<TopIndicator />
 
 <Toast />
 <Drawer>
@@ -116,12 +115,12 @@
 		<button
 			class="variant-filled-secondary btn btn-sm p-0"
 			onclick={() => {
-				inside_HTML_things = (Math.random() * 1000).toString();
-				// topIndicatorStore.show({
-				// 	insideHTML: '<p>Random text</p>',
-				// 	anchorElement: document.querySelector('body'),
-				// 	timeout: 2000
-				// });
+				topIndicatorStore.show({
+					// TODO: USE SVELTE SNIPPET HERE
+					innerHTML: '<p>Random text</p>',
+					anchorElement: document.querySelector('#folder-selector') as HTMLElement,
+					timeout: 2000
+				});
 			}}
 		>
 			Check

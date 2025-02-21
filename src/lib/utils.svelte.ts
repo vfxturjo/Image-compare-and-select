@@ -4,6 +4,7 @@ import {
 	AppState,
 	appTempStates,
 	saveFileSysHandle,
+	topIndicatorStore,
 	type foundFile,
 	type foundPair
 } from './appState.svelte';
@@ -151,6 +152,14 @@ export function setSelectionState(
 	}
 
 	AppState.selections.set(baseName, version);
+
+	if (AppState.showTopIndicator) {
+		topIndicatorStore.show({
+			innerHTML: "<h1 class='h1'>✔</h1>",
+			anchorElement: document.querySelector(`#mainImg-${version}`) as HTMLElement,
+			timeout: 1
+		});
+	}
 
 	if (!skipUpdate) {
 		updateSelectionCount();

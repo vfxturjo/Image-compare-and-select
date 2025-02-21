@@ -148,6 +148,7 @@
 					}}
 				>
 					<img
+						id="mainImg-{version}"
 						data-infoBar="{version} - {AppState.currentPair!.baseName}"
 						class="h-full w-full grow border-4 object-contain {version === 'v1'
 							? 'object-right'

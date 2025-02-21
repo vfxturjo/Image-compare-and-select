@@ -31,7 +31,7 @@
 	</button>
 </div>
 
-<div class="card flex flex-col gap-4 p-4">
+<div class="card flex flex-col gap-4 p-4" id="folder-selector">
 	{#each ['v1', 'v2'] as version}
 		<label class="label">
 			<h4 class="h4">{version === 'v1' ? 'First Folder' : 'Second Folder'}</h4>

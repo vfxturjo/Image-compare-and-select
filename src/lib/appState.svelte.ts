@@ -94,7 +94,8 @@ export const AppState = $state({
 		outputDirFileSysHandle: null as FileSystemDirectoryHandle | null,
 		progress: 0,
 		startTime: 0
-	}
+	},
+	showTopIndicator: true
 });
 
 export const appTempStates = $state({
@@ -104,39 +105,57 @@ export const appTempStates = $state({
 
 interface TopIndicatorObj {
 	id: number;
-	insideHTML: string;
-	anchorElement: HTMLElement | null;
+	innerHTML: string;
 	timeout: number;
+	fadeDuration: number;
+	top: number;
+	left: number;
+	width: number;
+	height: number;
 }
 
-export class TopIndicatorStore {
-	defaultTimeout = 200;
+export class TopIndicatorStoreClass {
+	defaultTimeout = 50;
+	defaultFadeDuration = 100;
 	topIndicatorIdCounter = 0;
 	topIndicatorStore = $state<TopIndicatorObj[]>([]);
 
-	constructor(
-		insideHTML = '',
-		anchorElement: HTMLElement | null = null,
-		timeout = this.defaultTimeout
-	) {
-		this.topIndicatorStore.push({ id: 1, insideHTML, anchorElement, timeout });
+	constructor(timeout = this.defaultTimeout) {
+		this.defaultTimeout = timeout;
 	}
 
-	showTopIndicator(
-		insideHTML: string,
-		anchorElement: HTMLElement | null,
-		timeout = this.defaultTimeout
-	) {
-		const newIndicator = {
-			id: this.topIndicatorIdCounter++,
-			insideHTML,
-			anchorElement,
-			timeout
-		};
-		this.topIndicatorStore.push(newIndicator);
+	show({
+		innerHTML = 'THIS IS A TEST',
+		anchorElement = null,
+		timeout = this.defaultTimeout,
+		fadeDuration = this.defaultFadeDuration
+	}: {
+		innerHTML?: string;
+		anchorElement?: HTMLElement | null;
+		timeout?: number;
+		fadeDuration?: number;
+	}) {
+		const newIndicatorId = this.topIndicatorIdCounter++;
+
+		const { top, left, width, height } = anchorElement
+			? anchorElement.getBoundingClientRect()
+			: { top: 0, left: 0, width: 500, height: 500 };
+
+		this.topIndicatorStore.push({
+			id: newIndicatorId,
+			innerHTML: innerHTML,
+			timeout: timeout,
+			fadeDuration: fadeDuration,
+			top: top,
+			left: left,
+			width: width,
+			height: height
+		});
+
+		console.log($state.snapshot(this.topIndicatorStore));
 
 		setTimeout(() => {
-			this.removeTopIndicator(newIndicator.id);
+			this.removeTopIndicator(newIndicatorId);
 		}, timeout);
 	}
 
@@ -146,7 +165,21 @@ export class TopIndicatorStore {
 			this.topIndicatorStore.splice(index, 1);
 		}
 	}
+
+	getTopIndicatorById(id: number) {
+		return this.topIndicatorStore.find((indicator) => indicator.id === id);
+	}
+
+	getTopIndicators() {
+		return this.topIndicatorStore;
+	}
+
+	getLength() {
+		return this.topIndicatorStore.length;
+	}
 }
+
+export const topIndicatorStore = new TopIndicatorStoreClass();
 
 export function saveFileSysHandle(key: string, handle: FileSystemDirectoryHandle | null) {
 	if (!handle) {
