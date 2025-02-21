@@ -42,6 +42,23 @@ export const AppSettings = new PersistedStateObjectAdvanced('app-settings', defa
 	syncTabs: false
 });
 
+export const defaultKeyboardSettings = {
+	showLeftPair: ['KeyQ', 'Numpad4'],
+	showRightPair: ['KeyD', 'Numpad6'],
+	selectV1: ['KeyA', 'Numpad1'],
+	selectV2: ['KeyD', 'Numpad3'],
+	selectBoth: ['KeyB', 'NumpadPlus'],
+	selectNone: ['KeyX', 'NumpadMinus']
+};
+
+export const KeySettings = new PersistedStateObjectAdvanced(
+	'Keyboard-settings',
+	defaultKeyboardSettings,
+	{
+		syncTabs: true
+	}
+);
+
 // App state
 export const AppState = $state({
 	v1DirFileSysHandle: null as FileSystemDirectoryHandle | null,
@@ -84,6 +101,52 @@ export const appTempStates = $state({
 	Selections_saved: false,
 	Selections_reset_done: false
 });
+
+interface TopIndicatorObj {
+	id: number;
+	insideHTML: string;
+	anchorElement: HTMLElement | null;
+	timeout: number;
+}
+
+export class TopIndicatorStore {
+	defaultTimeout = 200;
+	topIndicatorIdCounter = 0;
+	topIndicatorStore = $state<TopIndicatorObj[]>([]);
+
+	constructor(
+		insideHTML = '',
+		anchorElement: HTMLElement | null = null,
+		timeout = this.defaultTimeout
+	) {
+		this.topIndicatorStore.push({ id: 1, insideHTML, anchorElement, timeout });
+	}
+
+	showTopIndicator(
+		insideHTML: string,
+		anchorElement: HTMLElement | null,
+		timeout = this.defaultTimeout
+	) {
+		const newIndicator = {
+			id: this.topIndicatorIdCounter++,
+			insideHTML,
+			anchorElement,
+			timeout
+		};
+		this.topIndicatorStore.push(newIndicator);
+
+		setTimeout(() => {
+			this.removeTopIndicator(newIndicator.id);
+		}, timeout);
+	}
+
+	removeTopIndicator(id: number) {
+		const index = this.topIndicatorStore.findIndex((indicator) => indicator.id === id);
+		if (index !== -1) {
+			this.topIndicatorStore.splice(index, 1);
+		}
+	}
+}
 
 export function saveFileSysHandle(key: string, handle: FileSystemDirectoryHandle | null) {
 	if (!handle) {

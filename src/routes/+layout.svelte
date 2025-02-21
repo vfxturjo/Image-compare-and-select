@@ -7,10 +7,15 @@
 	import { base } from '$app/paths';
 
 	import { AppBar } from '@skeletonlabs/skeleton';
-	import { AppSettings, AppState, appTempStates } from '$lib/appState.svelte';
+	import {
+		AppSettings,
+		AppState,
+		appTempStates,
+		defaultKeyboardSettings,
+		KeySettings
+	} from '$lib/appState.svelte';
 	import {
 		handleFileOperation,
-		loadSavedSelections,
 		resetSavedSelections,
 		saveCurrentSelections
 	} from '$lib/utils.svelte';
@@ -23,17 +28,73 @@
 	import { popup } from '@skeletonlabs/skeleton';
 	import type { PopupSettings } from '@skeletonlabs/skeleton';
 
-	import { initializeStores, Drawer } from '@skeletonlabs/skeleton';
-	import { getDrawerStore } from '@skeletonlabs/skeleton';
+	import {
+		initializeStores,
+		Drawer,
+		getDrawerStore,
+		Toast,
+		getToastStore
+	} from '@skeletonlabs/skeleton';
+
+	initializeStores();
 
 	import { storePopup } from '@skeletonlabs/skeleton';
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 
+	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
+	import TopIndicator from './TopIndicator.svelte';
+
 	initializeStores();
 
 	const drawerStore = getDrawerStore();
+	const toastStore = getToastStore();
+
+	function autoHidingToast(message: string, timeout = 3500) {
+		toastStore.trigger({
+			message: message,
+			timeout: timeout,
+			background: 'variant-filled-error',
+			classes: 'text-center',
+			hoverable: true
+		} as ToastSettings);
+	}
+
+	function captureKey(event: KeyboardEvent, key: string, i: number) {
+		const newKey = event.code;
+
+		if (
+			['Escape', 'CapsLock', 'Shift', 'Control', 'Alt', 'Meta'].includes(event.key) ||
+			['Escape', 'CapsLock', 'Shift', 'Control', 'Alt', 'Meta'].includes(event.code) ||
+			event.code.startsWith('Arrow')
+		) {
+			resetToDefaultKey(`Cannot use modifier keys. 😟`);
+			return;
+		}
+
+		// Check for conflict with any other key
+		for (const [k, values] of Object.entries(KeySettings.v)) {
+			if (values.includes(newKey)) {
+				resetToDefaultKey(`Conflict with ${k} key. 🤔`);
+				return;
+			}
+		}
+
+		function resetToDefaultKey(ReasonText: string = '') {
+			autoHidingToast(`${ReasonText ? `${ReasonText} <br>` : '  '}Resetting to default.`);
+
+			KeySettings.v[key][i] = defaultKeyboardSettings[key][i];
+		}
+
+		// if passes the tests, set the new key
+		KeySettings.v[key][i] = newKey;
+	}
+
+	let inside_HTML_things = $state('');
 </script>
 
+<TopIndicator inside_HTML={inside_HTML_things} />
+
+<Toast />
 <Drawer>
 	{#if $drawerStore.id === 'exporterDrawer'}
 		<!-- {@render exporter()} -->
@@ -51,6 +112,22 @@
 	</svelte:fragment>
 	<a href="{base}/" class="btn btn-sm p-0">PhotoJudge</a>
 	<svelte:fragment slot="trail">
+		<!-- ###################################################### -->
+		<button
+			class="variant-filled-secondary btn btn-sm p-0"
+			onclick={() => {
+				inside_HTML_things = (Math.random() * 1000).toString();
+				// topIndicatorStore.show({
+				// 	insideHTML: '<p>Random text</p>',
+				// 	anchorElement: document.querySelector('body'),
+				// 	timeout: 2000
+				// });
+			}}
+		>
+			Check
+		</button>
+
+		<!-- ###################################################### -->
 		{#if AppSettings.v.dirsOk}
 			<div class="variant-filled btn-group [&>*]:px-2">
 				<div>{AppSettings.v.v1DirName}: {AppState.status.v1}</div>
@@ -166,7 +243,7 @@
 
 <!-- POPUP DATA -->
 
-<div class="card w-72 gap-2 p-4 shadow-xl" data-popup="popupViewSettings">
+<div class="card w-auto gap-2 p-4 shadow-xl" data-popup="popupViewSettings">
 	<div class="flex justify-between">
 		<h3 class="h3">View Settings</h3>
 		<button class="variant-outline btn btn-sm" id="will-close">✕</button>
@@ -192,13 +269,48 @@
 
 	<p>Thumbnail height</p>
 	<input type="range" max="1000" bind:value={AppSettings.v.thumbnailSize} />
+
+	<!-- keyboard shortcuts -->
+	<hr class="my-2" />
+	<h4 class="h4">Keyboard shortcuts</h4>
+	<table class="table-auto [&:th]:w-[33%]">
+		<thead>
+			<tr>
+				<th>Action</th>
+				<th>Key1</th>
+				<th>Key2</th>
+			</tr>
+		</thead>
+		<tbody>
+			{#each Object.entries(KeySettings.v) as [key, value]}
+				<tr>
+					<td class="pr-8">{key}</td>
+					{#each value as val, i}
+						<td class="text-center">
+							<button
+								class="variant-outline-secondary btn btn-sm {i === 0 ? 'mx-4' : ''}"
+								onclick={() => {
+									KeySettings.v[key][i] = 'Waiting...';
+									window.addEventListener('keydown', (event) => captureKey(event, key, i), {
+										once: true
+									});
+								}}
+							>
+								{#if val === null}Not Set{:else}{val}{/if}
+							</button>
+						</td>
+					{/each}
+				</tr>
+			{/each}
+		</tbody>
+	</table>
 </div>
 
 {#snippet AppLogo()}
 	<svg class="btn m-0 h-6 w-6 fill-primary-200 p-0" viewBox="0 0 449.5 449.5">
 		<path
 			d="M385.3,145.8l-17.3-23c-0.7-0.9-1.7-1.5-2.8-1.6l-70.4-9.8l1.7-12.3l25.5,3.6c2.3,0.3,4.4-1.3,4.8-3.6l5.6-40.3
-		c0.3-2.3-1.3-4.4-3.6-4.8l-25.5-3.6l2.2-15.5c0.3-2.3-1.3-4.4-3.6-4.8l-30.7-4.3c-2.3-0.3-4.4,1.3-4.8,3.6L264.2,45l-70.4-9.8
+	c0.3-2.3-1.3-4.4-3.6-4.8l-25.5-3.6l2.2-15.5c0.3-2.3-1.3-4.4-3.6-4.8l-30.7-4.3c-2.3-0.3-4.4,1.3-4.8,3.6L264.2,45l-70.4-9.8
 		c-1.1-0.2-2.2,0.1-3.1,0.8l-23,17.3c-0.9,0.7-1.5,1.7-1.6,2.8c-0.2,1.1,0.1,2.2,0.8,3.1l17.3,23c0.7,0.9,1.7,1.5,2.8,1.6l70.4,9.8
 		l-1.7,12.3l-25.5-3.6c-2.3-0.3-4.4,1.3-4.8,3.6l-5.6,40.3c-0.3,2.3,1.3,4.4,3.6,4.8l25.5,3.6l-5.2,37.6c2.8,0.4,5.6,0.7,8.4,0.9
 		l4.7-34l21.2,11.2l-3.1,22.6c2.9-0.1,5.7-0.3,8.6-0.5L288,160l70.4,9.8c1.1,0.2,2.2-0.1,3.1-0.8l23-17.3

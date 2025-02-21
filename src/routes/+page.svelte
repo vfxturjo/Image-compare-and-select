@@ -25,7 +25,7 @@
 </script>
 
 <div class="card flex w-full justify-between gap-4 p-4">
-	<h2 class="h2">Settings</h2>
+	<h2 class="h2">Select Folders</h2>
 	<button class="variant-outline-warning btn hover:variant-filled-error" onclick={resetAllSettings}>
 		Reset All
 	</button>
